@@ -473,6 +473,24 @@ public class ParserState {
     }
 
     /**
+     * Adds the index of an indirect return_call node to the extra data array.
+     *
+     * @param nodeIndex The index of the indirect return_call.
+     */
+    public void addIndirectReturnCall(int nodeIndex, int typeIndex, int tableIndex) {
+        bytecode.addIndirectReturnCall(nodeIndex, typeIndex, tableIndex);
+    }
+
+    /**
+     * Adds the index of a direct return_call node to the extra data array.
+     *
+     * @param nodeIndex The index of the direct return_call.
+     */
+    public void addReturnCall(int nodeIndex, int functionIndex) {
+        bytecode.addReturnCall(nodeIndex, functionIndex);
+    }
+
+    /**
      * Adds the mics flag to the bytecode.
      */
     public void addMiscFlag() {

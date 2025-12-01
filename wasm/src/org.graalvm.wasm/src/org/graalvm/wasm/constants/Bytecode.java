@@ -375,6 +375,8 @@ public class Bytecode {
     // Exception opcodes
     public static final int THROW = 0x1C;
     public static final int THROW_REF = 0x1D;
+    public static final int TAIL_CALL = 0x1E;
+    public static final int TAIL_CALL_INDIRECT = 0x1F;
 
     // Atomic opcodes
     public static final int ATOMIC_I32_LOAD = 0x00;

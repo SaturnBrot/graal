@@ -558,6 +558,49 @@ public class RuntimeBytecodeGen extends BytecodeGen {
         }
     }
 
+    /**
+     * Adds a tail call instruction to the bytecode. Starts by adding a misc and a tail_call instruction.
+     * If the nodeIndex and functionIndex both fit into a u8 value, two u8 values are added.
+     * Otherwise, two i32 values are added.
+     *
+     * @param nodeIndex The node index of the call
+     * @param functionIndex The function index of the call
+     */
+    public void addReturnCall(int nodeIndex, int functionIndex) {
+        add1(Bytecode.MISC);
+        add1(Bytecode.TAIL_CALL);
+        if (fitsIntoUnsignedByte(nodeIndex) && fitsIntoUnsignedByte(functionIndex)) {
+            add1(nodeIndex);
+            add1(functionIndex);
+        } else {
+            add4(nodeIndex);
+            add4(functionIndex);
+        }
+    }
+
+    /**
+     * Adds an indirect tail call instruction to the bytecode. Starts by adding a misc and a tail_call_indirect instruction.
+     * If the nodeIndex, typeIndex, and tableIndex all fit into a u8 value, three u8 values are added.
+     * Otherwise, three i32 values are added. In both cases, a 2-byte profile is added.
+     *
+     * @param nodeIndex The node index of the indirect call
+     * @param typeIndex The type index of the indirect call
+     * @param tableIndex The table index of the indirect call
+     */
+    public void addIndirectReturnCall(int nodeIndex, int typeIndex, int tableIndex) {
+        add1(Bytecode.MISC);
+        add1(Bytecode.TAIL_CALL_INDIRECT);
+        if (fitsIntoUnsignedByte(nodeIndex) && fitsIntoUnsignedByte(typeIndex) && fitsIntoUnsignedByte(tableIndex)) {
+            add1(nodeIndex);
+            add1(typeIndex);
+            add1(tableIndex);
+        } else {
+            add4(nodeIndex);
+            add4(typeIndex);
+            add4(tableIndex);
+        }
+    }
+
     public void addSelect(int instruction) {
         add1(instruction);
         addProfile();

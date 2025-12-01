@@ -145,6 +145,7 @@ public class WasmBinaryTools {
         // invalid wasm files.
         commandLine.add("-v"); // prints to stderr
         commandLine.add("--no-check");
+        commandLine.add("--enable-tail-call");
         for (WabtOption option : options) {
             switch (option) {
                 case MULTI_MEMORY -> commandLine.add("--enable-multi-memory");
