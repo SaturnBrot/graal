@@ -803,6 +803,28 @@ public abstract class BytecodeParser {
                             offset += 4;
                             break;
                         }
+                        case Bytecode.TAIL_CALL_U8: {
+                            final int functionIndex = rawPeekU8(bytecode, offset + 1);
+                            callNodes.add(new CallNode(originalOffset, functionIndex));
+                            offset += 2;
+                            break;
+                        }
+                        case Bytecode.TAIL_CALL_I32: {
+                            final int functionIndex = rawPeekI32(bytecode, offset + 4);
+                            callNodes.add(new CallNode(originalOffset, functionIndex));
+                            offset += 8;
+                            break;
+                        }
+                        case Bytecode.TAIL_CALL_INDIRECT_U8: {
+                            callNodes.add(new CallNode(originalOffset));
+                            offset += 3;
+                            break;
+                        }
+                        case Bytecode.TAIL_CALL_INDIRECT_I32: {
+                            callNodes.add(new CallNode(originalOffset));
+                            offset += 12;
+                            break;
+                        }
                         case Bytecode.MEMORY_INIT:
                         case Bytecode.MEMORY64_INIT:
                         case Bytecode.MEMORY_COPY:
