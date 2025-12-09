@@ -561,6 +561,9 @@ public class WasmInstantiator {
                     child = new WasmCallStubNode(bytecodeIndex, resolvedFunction);
                 }
             }
+            if(callNode.isTailCall()){
+                child.setTailCall();
+            }
             callNodes[childIndex++] = child;
         }
         return callNodes;

@@ -48,17 +48,20 @@ public class CallNode {
     private final int bytecodeOffset;
     private final int functionIndex;
     private final boolean isIndirectCall;
+    private boolean isTailCall;
 
     public CallNode(int bytecodeOffset, int functionIndex) {
         this.bytecodeOffset = bytecodeOffset;
         this.functionIndex = functionIndex;
         this.isIndirectCall = false;
+        this.isTailCall = false;
     }
 
     public CallNode(int bytecodeOffset) {
         this.bytecodeOffset = bytecodeOffset;
         this.functionIndex = -1;
         this.isIndirectCall = true;
+        this.isTailCall = false;
     }
 
     public int getBytecodeOffset() {
@@ -71,5 +74,14 @@ public class CallNode {
 
     public boolean isIndirectCall() {
         return isIndirectCall;
+    }
+
+    public CallNode asTailCall(){
+        isTailCall = true;
+        return this;
+    }
+
+    public boolean isTailCall(){
+        return isTailCall;
     }
 }

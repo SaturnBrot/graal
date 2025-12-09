@@ -809,7 +809,6 @@ public class BinaryParser extends BinaryStreamParser {
                     checkResultTypesMatch(callResultTypes, resultTypes);
                     // Push result values
                     state.pushAll(callResultTypes);
-                    //new addReturncall function (with "misc" before the actual instruction)
                     state.addReturnCall(callNodes.size(), callFunctionIndex);
                     callNodes.add(new CallNode(bytecode.location(), callFunctionIndex));
                     state.setUnreachable();
