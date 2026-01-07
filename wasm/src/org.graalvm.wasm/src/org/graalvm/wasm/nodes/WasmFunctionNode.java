@@ -601,8 +601,7 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                         stackPointer -= paramCount;
                         WasmArguments.setModuleInstance(args, functionInstance.moduleInstance());
 
-                        final Object result = executeIndirectCallNode(callNodeIndex, target, args);
-                        stackPointer = pushIndirectCallResult(frame, stackPointer, expectedFunctionTypeIndex, result, WasmLanguage.get(this));
+                        stackPointer = executeIndirectCallNode(frame, stackPointer, instance, callNodeIndex, expectedFunctionTypeIndex, target, args);
                         CompilerAsserts.partialEvaluationConstant(stackPointer);
                         break;
                     }
@@ -1684,14 +1683,11 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                             }
                             case Bytecode.TAIL_CALL_U8:
                             case Bytecode.TAIL_CALL_I32: {
-                                int callNodeIndex;
                                 final int functionIndex;
-                                if (opcode == Bytecode.TAIL_CALL_U8) {
-                                    callNodeIndex = rawPeekU8(bytecode, offset);
+                                if (miscOpcode == Bytecode.TAIL_CALL_U8) {
                                     functionIndex = rawPeekU8(bytecode, offset + 1);
                                     offset += 2;
                                 } else {
-                                    callNodeIndex = rawPeekI32(bytecode, offset);
                                     functionIndex = rawPeekI32(bytecode, offset + 4);
                                     offset += 8;
                                 }
@@ -1702,17 +1698,7 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                                 Object[] args = createArgumentsForCall(frame, function.typeIndex(), paramCount, stackPointer);
                                 stackPointer -= paramCount;
 
-                                while(true){
-                                    try {
-                                        stackPointer = executeDirectCall(frame, stackPointer, instance, callNodeIndex, function, args);
-                                        CompilerAsserts.partialEvaluationConstant(stackPointer);
-                                        break;
-                                    } catch (WasmTailCallException e) {
-                                        Object result = e.callTarget.call(e.arguments);
-                                        stackPointer = pushDirectCallResult(frame, stackPointer, function, result, WasmLanguage.get(this));
-                                    }
-                                }
-                                break;
+                                throw new WasmTailCallException(instance.target(functionIndex), args);
                             }
                             case Bytecode.TAIL_CALL_INDIRECT_U8:
                             case Bytecode.TAIL_CALL_INDIRECT_I32: {
@@ -1720,16 +1706,13 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                                 stackPointer--;
                                 final SymbolTable symtab = module.symbolTable();
 
-                                final int callNodeIndex;
                                 final int expectedFunctionTypeIndex;
                                 final int tableIndex;
-                                if (opcode == Bytecode.TAIL_CALL_INDIRECT_U8) {
-                                    callNodeIndex = rawPeekU8(bytecode, offset);
+                                if (miscOpcode == Bytecode.TAIL_CALL_INDIRECT_U8) {
                                     expectedFunctionTypeIndex = rawPeekU8(bytecode, offset + 1);
                                     tableIndex = rawPeekU8(bytecode, offset + 2);
                                     offset += 3;
                                 } else {
-                                    callNodeIndex = rawPeekI32(bytecode, offset);
                                     expectedFunctionTypeIndex = rawPeekI32(bytecode, offset + 4);
                                     tableIndex = rawPeekI32(bytecode, offset + 8);
                                     offset += 12;
@@ -1780,10 +1763,7 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                                 stackPointer -= paramCount;
                                 WasmArguments.setModuleInstance(args, functionInstance.moduleInstance());
 
-                                final Object result = executeIndirectCallNode(callNodeIndex, target, args);
-                                stackPointer = pushIndirectCallResult(frame, stackPointer, expectedFunctionTypeIndex, result, WasmLanguage.get(this));
-                                CompilerAsserts.partialEvaluationConstant(stackPointer);
-                                break;
+                                throw new WasmTailCallException(target, args);
                             }
                             default:
                                 throw CompilerDirectives.shouldNotReachHere();
@@ -1956,18 +1936,30 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
         Node callNode = callNodes[callNodeIndex];
         assert assertDirectCall(instance, function, callNode);
         Object result;
-        if (imported) {
-            WasmIndirectCallNode indirectCallNode = (WasmIndirectCallNode) callNode;
-            WasmFunctionInstance functionInstance = instance.functionInstance(function.index());
-            WasmArguments.setModuleInstance(args, functionInstance.moduleInstance());
-            result = indirectCallNode.execute(instance.target(function.index()), args);
-        } else {
-            WasmDirectCallNode directCallNode = (WasmDirectCallNode) callNode;
-            if(directCallNode.isTailCall()){
-                throw new WasmTailCallException(function.target(), args);
+        try {
+            if (imported) {
+                WasmIndirectCallNode indirectCallNode = (WasmIndirectCallNode) callNode;
+                WasmFunctionInstance functionInstance = instance.functionInstance(function.index());
+                WasmArguments.setModuleInstance(args, functionInstance.moduleInstance());
+                result = indirectCallNode.execute(instance.target(function.index()), args);
             } else {
+                WasmDirectCallNode directCallNode = (WasmDirectCallNode) callNode;
                 WasmArguments.setModuleInstance(args, instance);
                 result = directCallNode.execute(args);
+            }
+        } catch (WasmTailCallException e) {
+            CallTarget c = e.callTarget;
+            Object[] a = e.arguments;
+            WasmArguments.setModuleInstance(a, instance);
+            while (true) {
+                try {
+                    result = c.call(this, a);
+                    break;
+                } catch (WasmTailCallException e_1){
+                    c = e_1.callTarget;
+                    a = e_1.arguments;
+                    WasmArguments.setModuleInstance(a, instance);
+                }
             }
         }
         return pushDirectCallResult(frame, stackPointer, function, result, WasmLanguage.get(this));
@@ -1989,9 +1981,28 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
         return true;
     }
 
-    private Object executeIndirectCallNode(int callNodeIndex, CallTarget target, Object[] args) {
+    private int executeIndirectCallNode(VirtualFrame frame, int stackPointer, WasmInstance instance, int callNodeIndex, int expectedFunctionTypeIndex, CallTarget target, Object[] args) {
         WasmIndirectCallNode callNode = (WasmIndirectCallNode) callNodes[callNodeIndex];
-        return callNode.execute(target, args);
+        WasmArguments.setModuleInstance(args, instance);
+        Object result;
+        try {
+            result = callNode.execute(target, args);
+        } catch (WasmTailCallException e) {
+            CallTarget c = e.callTarget;
+            Object[] a = e.arguments;
+            WasmArguments.setModuleInstance(a, instance);
+            while (true) {
+                try {
+                    result = c.call(this, a);
+                    break;
+                } catch (WasmTailCallException e_1) {
+                    c = e_1.callTarget;
+                    a = e_1.arguments;
+                    WasmArguments.setModuleInstance(a, instance);
+                }
+            }
+        }
+        return pushIndirectCallResult(frame, stackPointer, expectedFunctionTypeIndex, result, WasmLanguage.get(this));
     }
 
     /**

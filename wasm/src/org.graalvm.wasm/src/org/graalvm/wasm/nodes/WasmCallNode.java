@@ -46,20 +46,10 @@ public abstract class WasmCallNode extends Node {
 
     public static final int NO_BYTECODE_INDEX = -1;
 
-    private boolean isTailCall;
-
     private final int bytecodeOffset;
 
     protected WasmCallNode(int bytecodeOffset) {
         this.bytecodeOffset = bytecodeOffset;
-    }
-
-    public void setTailCall(){
-        this.isTailCall = true;
-    }
-
-    public boolean isTailCall(){
-        return isTailCall;
     }
 
     public final int getBytecodeOffset() {

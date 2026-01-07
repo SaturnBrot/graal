@@ -2,7 +2,6 @@ package org.graalvm.wasm.exception;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.nodes.ControlFlowException;
-import org.graalvm.wasm.WasmFunction;
 
 public class WasmTailCallException extends ControlFlowException {
     public final CallTarget callTarget;

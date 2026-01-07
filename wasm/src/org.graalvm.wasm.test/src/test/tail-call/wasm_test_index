@@ -1,2 +1,6 @@
 tail_call_simple
 tail_call_with_recursion
+tail_call_simple_indirect
+tail_call_with_recursion_indirect
+tail_call_overflow
+tail_call_overflow_indirect
