@@ -39,23 +39,20 @@
 ;; SOFTWARE.
 ;;
 (module
-    (type $t_count (func (param i32 i32) (result i32)))
+    (type $t_count (func (param i32) (result i32)))
 
     (table 1 funcref)
     (elem (i32.const 0) $count_down)
 
-    (func $count_down (type $t_count) (param $n i32) (param $acc i32) (result i32)
+    (func $count_down (type $t_count) (param $n i32) (result i32)
         local.get $n
         i32.eqz
         if (result i32)
-            local.get $acc
+            local.get $n
         else
             local.get $n
             i32.const 1
             i32.sub
-            local.get $acc
-            i32.const 1
-            i32.add
             i32.const 0
             return_call_indirect (type $t_count)
         end
@@ -63,7 +60,6 @@
 
     (func (export "_main") (result i32)
         i32.const 1000000
-        i32.const 0
         i32.const 0
         call_indirect (type $t_count)
     )

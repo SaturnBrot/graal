@@ -604,6 +604,11 @@ public class RuntimeBytecodeGen extends BytecodeGen {
         }
     }
 
+    public void addReturnCallLoop(){
+        add1(Bytecode.MISC);
+        add1(Bytecode.TAIL_CALL_LOOP);
+    }
+
     public void addSelect(int instruction) {
         add1(instruction);
         addProfile();

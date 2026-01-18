@@ -39,7 +39,12 @@
 ;; SOFTWARE.
 ;;
 (module
-    (func $count_down (param $n i32) (result i32)
+    (type $t_count_down_b (func (param i32) (result i32)))
+
+    (table 1 funcref)
+    (elem (i32.const 0) $count_down_b)
+
+    (func $count_down_a (param $n i32) (result i32)
         local.get $n
         i32.eqz
         if (result i32)
@@ -48,12 +53,26 @@
             local.get $n
             i32.const 1
             i32.sub
-            return_call $count_down
+            i32.const 0
+            return_call_indirect (type $t_count_down_b)
+        end
+    )
+
+    (func $count_down_b (type $t_count_down_b) (param $n i32) (result i32)
+        local.get $n
+        i32.eqz
+        if (result i32)
+            local.get $n
+        else
+            local.get $n
+            i32.const 1
+            i32.sub
+            return_call $count_down_a
         end
     )
 
     (func (export "_main") (result i32)
         i32.const 1000000
-        call $count_down
+        call $count_down_a
     )
 )

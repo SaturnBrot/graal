@@ -490,6 +490,10 @@ public class ParserState {
         bytecode.addReturnCall(nodeIndex, functionIndex);
     }
 
+    public void addReturnCallLoop(){
+        bytecode.addReturnCallLoop();
+    }
+
     /**
      * Adds the mics flag to the bytecode.
      */

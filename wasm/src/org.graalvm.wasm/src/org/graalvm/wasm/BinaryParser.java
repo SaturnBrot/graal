@@ -807,6 +807,12 @@ public class BinaryParser extends BinaryStreamParser {
                     }
                     final byte[] callResultTypes = function.type().resultTypes();
                     checkResultTypesMatch(callResultTypes, resultTypes);
+                    // Make a recursive function iterative
+                    if(callFunctionIndex == functionIndex){
+                        state.addReturnCallLoop();
+                        state.setUnreachable();
+                        break;
+                    }
                     // Push result values
                     state.pushAll(callResultTypes);
                     state.addReturnCall(callNodes.size(), callFunctionIndex);

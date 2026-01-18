@@ -379,6 +379,7 @@ public class Bytecode {
     public static final int TAIL_CALL_I32 = 0x1F;
     public static final int TAIL_CALL_INDIRECT_U8 = 0x20;
     public static final int TAIL_CALL_INDIRECT_I32 = 0x21;
+    public static final int TAIL_CALL_LOOP = 0x22;
 
     // Atomic opcodes
     public static final int ATOMIC_I32_LOAD = 0x00;

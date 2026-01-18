@@ -1765,6 +1765,14 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
 
                                 throw new WasmTailCallException(target, args);
                             }
+                            case Bytecode.TAIL_CALL_LOOP:{
+                                int paramCount = module.symbolTable().functionTypeParamCount(codeEntry.functionIndex());
+                                unwindStack(frame, stackPointer, startStackPointer - paramCount, paramCount);
+                                dropStack(frame, stackPointer, stackPointer - paramCount);
+                                offset = startOffset;
+                                stackPointer = startStackPointer;
+                                break;
+                            }
                             default:
                                 throw CompilerDirectives.shouldNotReachHere();
                         }
