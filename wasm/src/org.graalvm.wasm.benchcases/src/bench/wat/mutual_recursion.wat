@@ -1,5 +1,5 @@
 ;;
-;; Copyright (c) 2025, Oracle and/or its affiliates. All rights reserved.
+;; Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
 ;; DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 ;;
 ;; The Universal Permissive License (UPL), Version 1.0
@@ -38,34 +38,51 @@
 ;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 ;;
-
 (module
-  (type $int_func (func (result i32)))
-  (type $setup_func (func))
-  (type $teardown_func (func (param i32)))
+    (type $int_func (func (result i32)))
+    (type $setup_func (func))
+    (type $teardown_func (func (param i32)))
+    (type $t_loop_b (func (param i32) (result i32)))
 
-  (global $iterations i32 (i32.const 250))
+    (global $iterations i32 (i32.const 250))
 
-  (memory $memory (export "memory") 0)
+    (memory $memory (export "memory") 0)
 
-  (func (export "benchmarkSetupEach") (type $setup_func))
-  (func (export "benchmarkTeardownEach") (type $teardown_func))
+    (func (export "benchmarkSetupEach") (type $setup_func))
+    (func (export "benchmarkTeardownEach") (type $teardown_func))
 
-  (func $loop (param $n i32) (result i32)
-    local.get $n
-    i32.eqz
-    if (result i32)
-      i32.const 0
-    else
-      local.get $n
-      i32.const 1
-      i32.sub
-      return_call $loop
-    end
-  )
+    (table 1 funcref)
+    (elem (i32.const 0) $loop_b)
 
-  (func (export "benchmarkRun") (type $int_func)
-    global.get $iterations
-    call $loop
-  )
+    (func $loop_a (param $n i32) (result i32)
+        local.get $n
+        i32.eqz
+        if (result i32)
+            local.get $n
+        else
+            local.get $n
+            i32.const 1
+            i32.sub
+            i32.const 0
+            call_indirect (type $t_loop_b)
+        end
+    )
+
+    (func $loop_b (type $t_loop_b) (param $n i32) (result i32)
+        local.get $n
+        i32.eqz
+        if (result i32)
+            local.get $n
+        else
+            local.get $n
+            i32.const 1
+            i32.sub
+            call $loop_a
+        end
+    )
+
+    (func (export "benchmarkRun") (type $int_func)
+        global.get $iterations
+        call $loop_a
+    )
 )

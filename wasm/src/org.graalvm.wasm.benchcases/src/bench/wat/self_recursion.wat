@@ -60,7 +60,7 @@
       local.get $n
       i32.const 1
       i32.sub
-      return_call $loop
+      call $loop
     end
   )
 

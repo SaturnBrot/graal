@@ -44,7 +44,7 @@
     (type $teardown_func (func (param i32)))
     (type $t_loop_b (func (param i32) (result i32)))
 
-    (global $iterations i32 (i32.const 10000))
+    (global $iterations i32 (i32.const 250))
 
     (memory $memory (export "memory") 0)
 
