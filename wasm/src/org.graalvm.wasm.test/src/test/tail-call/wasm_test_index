@@ -5,3 +5,5 @@ tail_call_with_recursion_indirect
 tail_call_overflow
 tail_call_overflow_indirect
 tail_call_mixed
+tail_call_local_variables
+tail_call_with_recursion_local_variables

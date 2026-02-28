@@ -522,7 +522,7 @@ class EmscriptenBuildTask(GraalWasmBuildTask):
                         mx.abort("Could not build the wasm-only output of " + filename + " with emcc.")
                 elif filename.endswith(".wat"):
                     # Step 1: compile the .wat file to .wasm.
-                    build_cmd_line = [wat2wasm_cmd, "-o", output_wasm_path, source_path]
+                    build_cmd_line = [wat2wasm_cmd, "--enable-tail-call", "-o", output_wasm_path, source_path]
                     if mx.run(build_cmd_line, nonZeroIsFatal=False) != 0:
                         mx.abort("Could not translate " + filename + " to binary format.")
                 elif filename.endswith(".wasm"):

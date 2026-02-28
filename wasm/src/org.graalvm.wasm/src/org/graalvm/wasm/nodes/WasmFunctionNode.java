@@ -1765,12 +1765,37 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
 
                                 throw new WasmTailCallException(target, args);
                             }
-                            case Bytecode.TAIL_CALL_LOOP:{
+                            case Bytecode.TAIL_CALL_LOOP: {
                                 int paramCount = module.symbolTable().functionTypeParamCount(codeEntry.functionIndex());
-                                unwindStack(frame, stackPointer, startStackPointer - paramCount, paramCount);
+                                unwindStack(frame, stackPointer, 0, paramCount);
                                 dropStack(frame, stackPointer, stackPointer - paramCount);
-                                offset = startOffset;
-                                stackPointer = startStackPointer;
+                                offset = bytecodeStartOffset;
+                                stackPointer = localCount;
+                                for (int i = paramCount; i != localCount; ++i) {
+                                    byte type = codeEntry.localType(i);
+                                    switch (type) {
+                                        case WasmType.I32_TYPE:
+                                            pushInt(frame, i, 0);
+                                            break;
+                                        case WasmType.I64_TYPE:
+                                            pushLong(frame, i, 0L);
+                                            break;
+                                        case WasmType.F32_TYPE:
+                                            pushFloat(frame, i, 0F);
+                                            break;
+                                        case WasmType.F64_TYPE:
+                                            pushDouble(frame, i, 0D);
+                                            break;
+                                        case WasmType.V128_TYPE:
+                                            pushVector128(frame, i, Vector128Ops.SINGLETON_IMPLEMENTATION.fromVector128(Vector128.ZERO));
+                                            break;
+                                        case WasmType.FUNCREF_TYPE:
+                                        case WasmType.EXTERNREF_TYPE:
+                                        case WasmType.EXNREF_TYPE:
+                                            pushReference(frame, i, WasmConstant.NULL);
+                                            break;
+                                    }
+                                }
                                 break;
                             }
                             default:
