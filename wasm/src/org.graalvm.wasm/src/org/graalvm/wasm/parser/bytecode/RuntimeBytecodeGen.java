@@ -559,51 +559,48 @@ public class RuntimeBytecodeGen extends BytecodeGen {
     }
 
     /**
-     * Adds a tail call instruction to the bytecode. If the nodeIndex and functionIndex both fit into a
-     * u8 value, a tail_call_u8 and two u8 values are added. Otherwise, a tail_call_i32 and two i32 values are
+     * Adds a tail call instruction to the bytecode. If the functionIndex fits into an u8 value,
+     * a tail_call_u8 and an u8 value are added. Otherwise, a tail_call_i32 and an i32 value are
      * added.
      *
-     * @param nodeIndex The node index of the tail call
      * @param functionIndex The function index of the tail call
      */
-    public void addReturnCall(int nodeIndex, int functionIndex) {
+    public void addReturnCall(int functionIndex) {
         add1(Bytecode.MISC);
-        if (fitsIntoUnsignedByte(nodeIndex) && fitsIntoUnsignedByte(functionIndex)) {
+        if (fitsIntoUnsignedByte(functionIndex)) {
             add1(Bytecode.TAIL_CALL_U8);
-            add1(nodeIndex);
             add1(functionIndex);
         } else {
             add1(Bytecode.TAIL_CALL_I32);
-            add4(nodeIndex);
             add4(functionIndex);
         }
     }
 
     /**
-     * Adds an indirect tail call instruction to the bytecode. If the nodeIndex, typeIndex, and
-     * tableIndex all fit into a u8 value, a tail_call_indirect_u8 and three u8 values are added.
-     * Otherwise, a tail_call_indirect_i32 and three i32 values are added. In both cases, a 2-byte
+     * Adds an indirect tail call instruction to the bytecode. If the typeIndex, and
+     * tableIndex fit into an u8 value, a tail_call_indirect_u8 and two u8 values are added.
+     * Otherwise, a tail_call_indirect_i32 and two i32 values are added. In both cases, a 2-byte
      * profile is added.
      *
-     * @param nodeIndex The node index of the indirect tail call
      * @param typeIndex The type index of the indirect tail call
      * @param tableIndex The table index of the indirect tail call
      */
-    public void addIndirectReturnCall(int nodeIndex, int typeIndex, int tableIndex) {
+    public void addIndirectReturnCall(int typeIndex, int tableIndex) {
         add1(Bytecode.MISC);
-        if (fitsIntoUnsignedByte(nodeIndex) && fitsIntoUnsignedByte(typeIndex) && fitsIntoUnsignedByte(tableIndex)) {
+        if (fitsIntoUnsignedByte(typeIndex) && fitsIntoUnsignedByte(tableIndex)) {
             add1(Bytecode.TAIL_CALL_INDIRECT_U8);
-            add1(nodeIndex);
             add1(typeIndex);
             add1(tableIndex);
         } else {
             add1(Bytecode.TAIL_CALL_INDIRECT_I32);
-            add4(nodeIndex);
             add4(typeIndex);
             add4(tableIndex);
         }
     }
 
+    /**
+     * Adds a tail call loop instruction to the bytecode.
+     */
     public void addReturnCallLoop(){
         add1(Bytecode.MISC);
         add1(Bytecode.TAIL_CALL_LOOP);

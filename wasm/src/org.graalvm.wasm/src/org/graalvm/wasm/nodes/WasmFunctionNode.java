@@ -1683,21 +1683,26 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                             }
                             case Bytecode.TAIL_CALL_U8:
                             case Bytecode.TAIL_CALL_I32: {
+                                // Pop function index.
                                 final int functionIndex;
                                 if (miscOpcode == Bytecode.TAIL_CALL_U8) {
-                                    functionIndex = rawPeekU8(bytecode, offset + 1);
-                                    offset += 2;
+                                    functionIndex = rawPeekU8(bytecode, offset);
+                                    offset += 1;
                                 } else {
-                                    functionIndex = rawPeekI32(bytecode, offset + 4);
-                                    offset += 8;
+                                    functionIndex = rawPeekI32(bytecode, offset);
+                                    offset += 4;
                                 }
-
+                                // Throw exception.
                                 WasmFunction function = module.symbolTable().function(functionIndex);
                                 int paramCount = function.paramCount();
-
                                 Object[] args = createArgumentsForCall(frame, function.typeIndex(), paramCount, stackPointer);
+                                if(function.isImported()){
+                                    WasmFunctionInstance functionInstance = instance.functionInstance(functionIndex);
+                                    WasmArguments.setModuleInstance(args, functionInstance.moduleInstance());
+                                } else{
+                                    WasmArguments.setModuleInstance(args, instance);
+                                }
                                 stackPointer -= paramCount;
-
                                 throw new WasmTailCallException(instance.target(functionIndex), args);
                             }
                             case Bytecode.TAIL_CALL_INDIRECT_U8:
@@ -1705,17 +1710,16 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                                 // Extract the function object.
                                 stackPointer--;
                                 final SymbolTable symtab = module.symbolTable();
-
                                 final int expectedFunctionTypeIndex;
                                 final int tableIndex;
                                 if (miscOpcode == Bytecode.TAIL_CALL_INDIRECT_U8) {
-                                    expectedFunctionTypeIndex = rawPeekU8(bytecode, offset + 1);
-                                    tableIndex = rawPeekU8(bytecode, offset + 2);
-                                    offset += 3;
+                                    expectedFunctionTypeIndex = rawPeekU8(bytecode, offset);
+                                    tableIndex = rawPeekU8(bytecode, offset + 1);
+                                    offset += 2;
                                 } else {
-                                    expectedFunctionTypeIndex = rawPeekI32(bytecode, offset + 4);
-                                    tableIndex = rawPeekI32(bytecode, offset + 8);
-                                    offset += 12;
+                                    expectedFunctionTypeIndex = rawPeekI32(bytecode, offset);
+                                    tableIndex = rawPeekI32(bytecode, offset + 4);
+                                    offset += 8;
                                 }
                                 final WasmTable table = instance.store().tables().table(instance.tableAddress(tableIndex));
                                 final Object[] elements = table.elements();
@@ -1744,12 +1748,9 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                                     enterErrorBranch();
                                     throw WasmException.format(Failure.UNSPECIFIED_TRAP, this, "Unknown table element type: %s", element);
                                 }
-
                                 int expectedTypeEquivalenceClass = symtab.equivalenceClass(expectedFunctionTypeIndex);
-
                                 // Target function instance must be from the same context.
                                 assert functionInstanceContext == WasmContext.get(this);
-
                                 // Validate that the target function type matches the expected type of the
                                 // indirect call by performing an equivalence-class check.
                                 if (expectedTypeEquivalenceClass != function.typeEquivalenceClass()) {
@@ -1757,20 +1758,22 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                                     failFunctionTypeCheck(function, expectedFunctionTypeIndex);
                                 }
 
-                                // Invoke the resolved function.
+                                // Throw exception for the resolved function.
                                 int paramCount = module.symbolTable().functionTypeParamCount(expectedFunctionTypeIndex);
                                 Object[] args = createArgumentsForCall(frame, expectedFunctionTypeIndex, paramCount, stackPointer);
                                 stackPointer -= paramCount;
                                 WasmArguments.setModuleInstance(args, functionInstance.moduleInstance());
-
                                 throw new WasmTailCallException(target, args);
                             }
                             case Bytecode.TAIL_CALL_LOOP: {
+                                // Update parameters.
                                 int paramCount = module.symbolTable().functionTypeParamCount(codeEntry.functionIndex());
                                 unwindStack(frame, stackPointer, 0, paramCount);
                                 dropStack(frame, stackPointer, stackPointer - paramCount);
+                                // Reset function.
                                 offset = bytecodeStartOffset;
                                 stackPointer = localCount;
+                                // Initialize locals.
                                 for (int i = paramCount; i != localCount; ++i) {
                                     byte type = codeEntry.localType(i);
                                     switch (type) {
@@ -1969,10 +1972,11 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
         Node callNode = callNodes[callNodeIndex];
         assert assertDirectCall(instance, function, callNode);
         Object result;
+        WasmFunctionInstance functionInstance = null;
         try {
             if (imported) {
                 WasmIndirectCallNode indirectCallNode = (WasmIndirectCallNode) callNode;
-                WasmFunctionInstance functionInstance = instance.functionInstance(function.index());
+                functionInstance = instance.functionInstance(function.index());
                 WasmArguments.setModuleInstance(args, functionInstance.moduleInstance());
                 result = indirectCallNode.execute(instance.target(function.index()), args);
             } else {
@@ -1980,18 +1984,16 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                 WasmArguments.setModuleInstance(args, instance);
                 result = directCallNode.execute(args);
             }
-        } catch (WasmTailCallException e) {
-            CallTarget c = e.callTarget;
-            Object[] a = e.arguments;
-            WasmArguments.setModuleInstance(a, instance);
+        } catch (WasmTailCallException e_1) {
+            CallTarget c = e_1.callTarget;
+            Object[] a = e_1.arguments;
             while (true) {
                 try {
                     result = c.call(this, a);
                     break;
-                } catch (WasmTailCallException e_1){
-                    c = e_1.callTarget;
-                    a = e_1.arguments;
-                    WasmArguments.setModuleInstance(a, instance);
+                } catch (WasmTailCallException e_2){
+                    c = e_2.callTarget;
+                    a = e_2.arguments;
                 }
             }
         }
@@ -2016,14 +2018,12 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
 
     private int executeIndirectCallNode(VirtualFrame frame, int stackPointer, WasmInstance instance, int callNodeIndex, int expectedFunctionTypeIndex, CallTarget target, Object[] args) {
         WasmIndirectCallNode callNode = (WasmIndirectCallNode) callNodes[callNodeIndex];
-        WasmArguments.setModuleInstance(args, instance);
         Object result;
         try {
             result = callNode.execute(target, args);
         } catch (WasmTailCallException e) {
             CallTarget c = e.callTarget;
             Object[] a = e.arguments;
-            WasmArguments.setModuleInstance(a, instance);
             while (true) {
                 try {
                     result = c.call(this, a);
@@ -2031,7 +2031,6 @@ public final class WasmFunctionNode<V128> extends Node implements BytecodeOSRNod
                 } catch (WasmTailCallException e_1) {
                     c = e_1.callTarget;
                     a = e_1.arguments;
-                    WasmArguments.setModuleInstance(a, instance);
                 }
             }
         }

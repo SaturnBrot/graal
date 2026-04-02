@@ -475,21 +475,25 @@ public class ParserState {
     /**
      * Adds the index of an indirect return call node to the extra data array.
      *
-     * @param nodeIndex The index of the indirect return call.
+     * @param typeIndex The index of the type of the function to call.
+     * @param tableIndex The index of the table.
      */
-    public void addIndirectReturnCall(int nodeIndex, int typeIndex, int tableIndex) {
-        bytecode.addIndirectReturnCall(nodeIndex, typeIndex, tableIndex);
+    public void addIndirectReturnCall(int typeIndex, int tableIndex) {
+        bytecode.addIndirectReturnCall(typeIndex, tableIndex);
     }
 
     /**
-     * Adds the index of a direct return call node to the extra data array.
+     * Adds the index of a function to the extra data array.
      *
-     * @param nodeIndex The index of the direct return call.
+     * @param functionIndex The index of the function to call.
      */
-    public void addReturnCall(int nodeIndex, int functionIndex) {
-        bytecode.addReturnCall(nodeIndex, functionIndex);
+    public void addReturnCall(int functionIndex) {
+        bytecode.addReturnCall(functionIndex);
     }
 
+    /**
+     * Adds a ReturnCallLoop to the bytecode.
+     */
     public void addReturnCallLoop(){
         bytecode.addReturnCallLoop();
     }

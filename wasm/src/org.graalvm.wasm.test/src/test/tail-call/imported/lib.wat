@@ -1,5 +1,5 @@
 ;;
-;; Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+;; Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
 ;; DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 ;;
 ;; The Universal Permissive License (UPL), Version 1.0
@@ -39,36 +39,16 @@
 ;; SOFTWARE.
 ;;
 (module
-    (func $fib_helper (param $n i32) (param $a i32) (param $b i32) (result i32)
-        (local $temp i32)
-        local.get $b
-        local.set $temp
+    (func $func (export "func") (param $n i32) (result i32)
         local.get $n
         i32.eqz
         if (result i32)
-            local.get $a
+            local.get $n
         else
             local.get $n
             i32.const 1
             i32.sub
-            local.get $temp
-            local.get $a
-            local.get $temp
-            i32.add
-            return_call $fib_helper
+            return_call $func
         end
     )
-
-    (func $fib (param $n i32) (result i32)
-        local.get $n
-        i32.const 0
-        i32.const 1
-        return_call $fib_helper
-    )
-
-    (func (export "_main") (result i32)
-        i32.const 10
-        call $fib
-    )
 )
-

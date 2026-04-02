@@ -815,8 +815,7 @@ public class BinaryParser extends BinaryStreamParser {
                         state.setUnreachable();
                         break;
                     }
-                    state.addReturnCall(callNodes.size(), callFunctionIndex);
-                    callNodes.add(new CallNode(bytecode.location(), callFunctionIndex));
+                    state.addReturnCall(callFunctionIndex);
                     state.setUnreachable();
                     break;
                 }
@@ -843,8 +842,7 @@ public class BinaryParser extends BinaryStreamParser {
                     checkResultTypesMatch(callResultTypes, resultTypes);
                     // Push result values
                     state.pushAll(callResultTypes);
-                    state.addIndirectReturnCall(callNodes.size(), expectedFunctionTypeIndex, tableIndex);
-                    callNodes.add(new CallNode(bytecode.location()));
+                    state.addIndirectReturnCall(expectedFunctionTypeIndex, tableIndex);
                     state.setUnreachable();
                     break;
                 }

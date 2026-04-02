@@ -56,6 +56,7 @@ import org.graalvm.wasm.test.suites.control.LoopBlockSuite;
 import org.graalvm.wasm.test.suites.control.MultiValueSuite;
 import org.graalvm.wasm.test.suites.control.MultipleFunctionsSuite;
 import org.graalvm.wasm.test.suites.control.SimpleBlockSuite;
+import org.graalvm.wasm.test.suites.control.TailCallSuite;
 import org.graalvm.wasm.test.suites.debugging.DebugObjectFactorySuite;
 import org.graalvm.wasm.test.suites.debugging.DebugValidationSuite;
 import org.graalvm.wasm.test.suites.linker.LinkerSuite;
@@ -108,7 +109,8 @@ import org.junit.runners.Suite;
                 ThreadsSuite.class,
                 ExceptionSuite.class,
                 DebugValidationSuite.class,
-                DebugObjectFactorySuite.class
+                DebugObjectFactorySuite.class,
+                TailCallSuite.class
 })
 
 public class WasmTestSuite {

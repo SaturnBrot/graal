@@ -1,5 +1,5 @@
 ;;
-;; Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+;; Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
 ;; DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 ;;
 ;; The Universal Permissive License (UPL), Version 1.0
@@ -39,25 +39,14 @@
 ;; SOFTWARE.
 ;;
 (module
-    (func $add1 (param i32) (result i32)
-        (local $temp i32)
-        i32.const 1
-        local.get 1
-        i32.add
-        local.set 1
-        local.get 0
-        local.get 1
-        i32.add
-    )
+  (import "lib" "func" (func $func (param i32) (result i32)))
 
-    (func $compute (param i32) (result i32)
-        local.get 0
-        return_call $add1
-    )
+  (func (export "_main") (result i32)
+    call $my_func
+  )
 
-    (func (export "_main") (result i32)
-        i32.const 10
-        call $compute
-    )
+  (func $my_func (result i32)
+    i32.const 250
+    return_call $func
+  )
 )
-
